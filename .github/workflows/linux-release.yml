@@ -1,0 +1,52 @@
+name: Linux Release
+
+on:
+  push:
+    tags:
+      - 'V*'
+
+jobs:
+  build:
+    name: Create Release
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        fail-fast: false
+        coq-versin: [V8.6.1, V8.102, V8.11.1]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        ref: ${{ matrix.coq-version }}
+      - name: Install Coq
+        run: |
+          sudo apt-get install -y opam
+          opam --version
+          ./configure -prefix=$HOME/bin/coq/${{ matrix.coq-version }}
+          make && make install
+          cd $HOME/bin/coq
+          zip -r $HOME/coq.zip .
+      - name: Show Coq version
+        run: ~/bin/coq/${{ matrix.coq-version }}/bin/coqc --version
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          with:
+            tag_name: ${{ github.ref }}
+            release_name: Release ${{ github.ref }}
+            body: |
+              This release is automatically built by GitHub Actions.
+            draft: false
+            prelease: false
+      - name: Upload Release Asset
+        id: upload-release-asset 
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          with:
+            upload_url: ${{ steps.create_release.outputs.upload_url }}
+            asset_path: $HOME/coq.zip
+            asset_name: coq.zip
+            asset_content_type: application/zip
+
