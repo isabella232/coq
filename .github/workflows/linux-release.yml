@@ -2,8 +2,8 @@ name: Linux Release
 
 on:
   push:
-    tags:
-      - 'V*'
+    branches:
+      - 'release/gha-*'
 
 jobs:
   build:
