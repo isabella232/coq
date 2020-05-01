@@ -2,8 +2,8 @@ name: Linux Release
 
 on:
   push:
-    branches:
-      - 'release/gha-*'
+    tags:
+      - 'gha-*'
 
 jobs:
   build:
@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        coq-versin: [V8.6.1, V8.102, V8.11.1]
+        coq-version: [V8.6.1, V8.10.2, V8.11.1]
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -22,24 +22,25 @@ jobs:
         run: |
           sudo apt-get install -y opam
           opam --version
-          ./configure -prefix=$HOME/bin/coq/${{ matrix.coq-version }}
+          ./configure -prefix=$(pwd)/coq
           make && make install
-          cd $HOME/bin/coq
-          zip -r $HOME/coq.zip .
+          cd coq
+          zip -r ../coq.zip .
       - name: Show Coq version
-        run: ~/bin/coq/${{ matrix.coq-version }}/bin/coqc --version
+        run: ./coq/bin/coqc --version
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
+          tag_name: ${{ github.ref }}-${{ matrix.coq-version }}
+          release_name: Release ${{ github.ref }}-${{ matrix.coq-version }}
           body: |
             This release is automatically built by GitHub Actions.
+            Coq ${{ matrix.coq-version }}
           draft: false
-          prelease: false
+          prerelease: false
       - name: Upload Release Asset
         id: upload-release-asset 
         uses: actions/upload-release-asset@v1
@@ -47,7 +48,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: $HOME/coq.zip
-          asset_name: coq.zip
+          asset_path: ./coq.zip
+          asset_name: coq-${{ matrix.coq-version }}.zip
           asset_content_type: application/zip
-
