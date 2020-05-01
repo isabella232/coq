@@ -2,7 +2,7 @@ name: Linux Release
 
 on:
   push:
-    branches:
+    tags:
       - 'release/gha-*'
 
 jobs:
@@ -22,9 +22,12 @@ jobs:
         run: |
           sudo apt-get install -y opam
           opam --version
-          ./configure -prefix=$HOME/bin/coq/${{ matrix.coq-version }}
-          make && make install
-          cd $HOME/bin/coq
+          # ./configure -prefix=$HOME/bin/coq/${{ matrix.coq-version }}
+          # make && make install
+          # cd $HOME/bin/coq
+          mkdir aaa
+          cd aaa
+          touch foobar
           zip -r $HOME/coq.zip .
       - name: Show Coq version
         run: ~/bin/coq/${{ matrix.coq-version }}/bin/coqc --version
@@ -47,7 +50,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: $HOME/coq.zip
-          asset_name: coq.zip
+          asset_path: ./coq.zip
+          asset_name: coq-${{ matrix.coq-version }}.zip
           asset_content_type: application/zip
 
